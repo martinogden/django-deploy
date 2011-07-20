@@ -38,6 +38,7 @@ class Deploy(MyTask):
     Deploy to remote server and run migrations if run_migrations == True
     """
     name = 'deploy'
+
     def run(self, run_migrations=False, update_requirements=True):
         self.test_local()
         self.git_pull()
