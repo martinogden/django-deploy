@@ -101,6 +101,7 @@ class PrepareLocal(MyTask):
 
     def run(self):
         self.ungit_directory()
+        self.append_activate()
 
     def ungit_directory(self):
         """
@@ -109,6 +110,15 @@ class PrepareLocal(MyTask):
         with cd('$WORKON_HOME/%(domain)s/project' % env):
             local('rm -rf .git')
 
+    def append_activate(self):
+        with cd('%(virtual_env)s/project' % env):
+            local('export DJANGO_SETTINGS_MODULE=settings.%(name)s' % env)
+            local('echo "export DJANGO_SETTINGS_MODULE=settings.%(name)s" >> ../bin/activate' % env)
+            local('export PYTHONPATH=$PYTHONPATH:$PWD')
+            local('echo "export PYTHONPATH=$PYTHONPATH:$PWD" >> ../bin/activate')
+            local('deactivate')
+            local('workon %(domain)s' % env)
+            local('echo $DJANGO_SETTINGS_MODULE')
 
 prepare_local = PrepareLocal()
 
