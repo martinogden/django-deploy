@@ -9,8 +9,10 @@ env.path = local('pwd')
 env.repo = 'minge-net'
 env.settings = 'production'
 
-
-print settings.ENVIRONMENT_SETTINGS[env.settings]
+try:
+    print settings.ENVIRONMENT_SETTINGS[env.settings]
+except:
+    pass
 
 
 class MyTask(tasks.Task):
