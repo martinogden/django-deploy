@@ -117,7 +117,7 @@ class PrepareLocal(MyTask):
             local('export PYTHONPATH=$PYTHONPATH:$PWD')
             local('echo "export PYTHONPATH=$PYTHONPATH:$PWD" >> ../bin/activate')
             local('source ../bin/activate')
-            local('workon %(domain)s' % env)
+            local('echo $PATH')
             local('echo $DJANGO_SETTINGS_MODULE')
 
 prepare_local = PrepareLocal()
