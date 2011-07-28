@@ -6,7 +6,7 @@ from fabric.utils import abort
 from django.conf import settings
 
 env.path = local('pwd')
-env.repo = 'minge-net'
+env.repo = 'test-net'
 env.settings = 'production'
 
 try:
@@ -26,7 +26,7 @@ class MyTask(tasks.Task):
         env.user = 'cahoona'
         env.hosts = ['92.63.136.213']
         env.password = 'v-Fj9P@8'
-        env.domain = 'minge.net'
+        env.domain = 'test.net'
         env.virtual_env = '$WORKON_HOME/%(domain)s' % env
         django.settings_module('settings.%(name)s' % env)
 
@@ -35,7 +35,7 @@ class MyTask(tasks.Task):
         env.user = 'cahoona'
         env.hosts = ['92.63.136.213']
         env.password = 'v-Fj9P@8'
-        env.domain = 'staging.minge.net'
+        env.domain = 'staging.test.net'
         env.virtual_env = '$WORKON_HOME/%(domain)s' % env
         django.settings_module('settings.%(name)s' % env)
 
