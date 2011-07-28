@@ -108,7 +108,7 @@ class PrepareLocal(MyTask):
         Remove .git directory from project
         """
         with cd('$WORKON_HOME/%(domain)s/project' % env):
-            local('rm -rf .git')
+            local('rm -rf $WORKON_HOME/%(domain)s/project/.git' % env)
 
     def append_activate(self):
         with cd('%(virtual_env)s/project' % env):
