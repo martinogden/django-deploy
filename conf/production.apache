@@ -1,6 +1,0 @@
-<VirtualHost 127.0.0.1:8080>
-        WSGIScriptAlias / /home/cahoona/.virtualenvs/<DOMAIN_NAME>/project/conf/production.wsgi
-
-        ServerName <DOMAIN_NAME>
-        # DocumentRoot /var/www/vhosts/<DOMAIN_NAME>/
-</VirtualHost>
