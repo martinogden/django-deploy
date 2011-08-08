@@ -100,6 +100,7 @@ class Bootstrap(BaseTask):
             run('chmod 777 %(vhost_root)s/%(folder)s' % locals())
 
     def upload_config_files(self):
+        vhost_root = '/var/www/vhosts/%(domain)s' % env
         kwargs = dict(context=env, use_sudo=True, backup=False)
         # wsgi
         upload_template('%(real_fabfile)s/conf/wsgi.conf' % env,\
