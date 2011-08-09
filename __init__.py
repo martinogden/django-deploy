@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fabric.api import local, run, sudo, prefix, cd, env
 from fabric.contrib import django
 from fabric.contrib.files import upload_template, append
@@ -18,6 +20,9 @@ env.hosts = ['92.63.136.213']
 env.password = 'v-Fj9P@8'
 # Allow fabric to restart apache2
 env.always_use_pty = False
+
+# Number of previous deploy releases to keep
+RELEASE_COUNT = 5
 
 # @link https://bitbucket.org/dhellmann/virtualenvwrapper/issue/62/hooklog-permissions#comment-229798
 # env.shell = '/bin/bash --noprofile -l -c'
@@ -86,8 +91,8 @@ class Bootstrap(BaseTask):
 
     def clone_git_repo(self):
         # Checkout git repo from cahoona VM-3
-        with cd(env.virtual_env):
-            run('git clone git@92.63.136.209:%(repo)s.git project' % env)
+        with cd('%(virtual_env)s/releases'):
+            run('git clone git@92.63.136.209:%(repo)s.git current' % env)
 
     def create_folders(self):
         # Create dirs
@@ -98,6 +103,10 @@ class Bootstrap(BaseTask):
         # Permissions
         for folder in ['media', 'log']:
             run('chmod 777 %(vhost_root)s/%(folder)s' % locals())
+
+        # Set up releases (for deployment)
+        run('mkdir %(virtual_env)/releases')
+        run('ln -s %(virtual_env)/releases/current %(virtual_env)/project')
 
     def upload_config_files(self):
         vhost_root = '/var/www/vhosts/%(domain)s' % env
@@ -128,6 +137,12 @@ class Deploy(BaseTask):
     def run(self, update_requirements=False, migrate=False, static=False):
         super(Deploy, self).run()
         sudo('chmod 777 $WORKON_HOME/hook.log')
+
+        # Move current to old release
+        with cd('%(virtual_env)s/releases' % env):
+            now = datetime.now().strftime('%Y%m%d%H%M%S')
+            run('cp -R current %s' % now)
+
         with cd('%(virtual_env)s/project' % env):
             run('git pull')
             with prefix('source ../bin/activate'):
@@ -138,6 +153,33 @@ class Deploy(BaseTask):
                 if static:
                     run('django-admin.py collectstatic')
         sudo('service apache2 graceful')
+
+
+class Rollback(BaseTask):
+    """
+    Rollback remote project to previous release if one exists
+    """
+    name = 'rollback'
+
+    def run(self):
+        super(Rollback, self).run()
+        with cd('%(virtual_env)s/releases' % env):
+            # Only rollback if we have previous releases
+            if int(run('ls -1 | wc -l')) < 2:
+                abort('There is no previous release to rollback to')
+
+            # Get previous release
+            output = run("ls . | sort -f | grep -v '^current$' $1")
+            previous_release = output.split()[-1]
+
+            # Move previous release to current
+            run('rm -Rf current')
+            run('mv %s current' % previous_release)
+
+            # Tidy up (remove) old releases
+            while int(run('ls -1 | wc -l')) >  RELEASE_COUNT:
+                run('rm -Rf $(ls . | sort -f | head -n 1)')
+            sudo('service apache2 graceful')
 
 
 class Test(tasks.Task):
@@ -210,6 +252,7 @@ production = Production()
 staging  = Staging()
 bootstrap = Bootstrap()
 deploy = Deploy()
+rollback = Rollback()
 test  = Test()
 create_database = CreateDatabase()
 sync_database = SyncDatabase()
