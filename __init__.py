@@ -91,8 +91,12 @@ class Bootstrap(BaseTask):
 
     def clone_git_repo(self):
         # Checkout git repo from cahoona VM-3
-        with cd('%(virtual_env)s/releases'):
+        run('mkdir -p %(virtual_env)s/releases' % env)
+        with cd('%(virtual_env)s/releases' % env):
             run('git clone git@92.63.136.209:%(repo)s.git current' % env)
+        # symlink project to current release
+        run('ln -s %(virtual_env)s/releases/current %(virtual_env)s/project'\
+            % env)
 
     def create_folders(self):
         # Create dirs
@@ -103,10 +107,6 @@ class Bootstrap(BaseTask):
         # Permissions
         for folder in ['media', 'log']:
             run('chmod 777 %(vhost_root)s/%(folder)s' % locals())
-
-        # Set up releases (for deployment)
-        run('mkdir %(virtual_env)/releases')
-        run('ln -s %(virtual_env)/releases/current %(virtual_env)/project')
 
     def upload_config_files(self):
         vhost_root = '/var/www/vhosts/%(domain)s' % env
@@ -134,7 +134,7 @@ class Deploy(BaseTask):
     """
     name = 'deploy'
 
-    def run(self, update_requirements=False, migrate=False, static=False):
+    def run(self, update_requirements=True, migrate=True, static=True):
         super(Deploy, self).run()
         sudo('chmod 777 $WORKON_HOME/hook.log')
 
@@ -145,13 +145,13 @@ class Deploy(BaseTask):
 
         with cd('%(virtual_env)s/project' % env):
             run('git pull')
-            with prefix('source ../bin/activate'):
+            with prefix('workon %(domain)s' % env):
                 if update_requirements:
                     run('pip install -r REQUIREMENTS')
                 if migrate:
                     run('django-admin.py migrate --all')
                 if static:
-                    run('django-admin.py collectstatic')
+                    run('django-admin.py collectstatic --noinput')
         sudo('service apache2 graceful')
 
 
@@ -161,7 +161,7 @@ class Rollback(BaseTask):
     """
     name = 'rollback'
 
-    def run(self):
+    def run(self, update_requirements=True, migrate=True, static=True):
         super(Rollback, self).run()
         with cd('%(virtual_env)s/releases' % env):
             # Only rollback if we have previous releases
@@ -179,6 +179,12 @@ class Rollback(BaseTask):
             # Tidy up (remove) old releases
             while int(run('ls -1 | wc -l')) >  RELEASE_COUNT:
                 run('rm -Rf $(ls . | sort -f | head -n 1)')
+            if update_requirements:
+                run('pip install -r REQUIREMENTS')
+            if migrate:
+                run('django-admin.py migrate --all')
+            if static:
+                run('django-admin.py collectstatic')
             sudo('service apache2 graceful')
 
 
