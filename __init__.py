@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fabric.api import local, run, sudo, prefix, cd, env
 from fabric.contrib import django
-from fabric.contrib.files import upload_template, append
+from fabric.contrib.files import upload_template, append, comment, uncomment
 from fabric.contrib.console import confirm
 from fabric import tasks
 from fabric.utils import abort, puts
@@ -128,13 +128,29 @@ class Bootstrap(BaseTask):
         sudo('service nginx restart')
 
 
-class Deploy(BaseTask):
+class BaseDeploy(BaseTask):
+
+    def update_and_migrate(self):
+        with cd('%(virtual_env)s/project' % env):
+            with prefix('workon %(domain)s' % env):
+                run('pip install -r REQUIREMENTS')
+                run('django-admin.py migrate --all')
+                run('django-admin.py collectstatic --noinput')
+
+    def remove_old_releases(self):
+        with cd('%(virtual_env)s/releases' % env):
+            # Tidy up (remove) old releases
+            while int(run('ls -1 | wc -l')) >  RELEASE_COUNT:
+                run('rm -Rf $(ls . | sort -f | head -n 1)')
+
+
+class Deploy(BaseDeploy):
     """
     Deploy project to remote server
     """
     name = 'deploy'
 
-    def run(self, update_requirements=True, migrate=True, static=True):
+    def run(self):
         super(Deploy, self).run()
         sudo('chmod 777 $WORKON_HOME/hook.log')
 
@@ -145,17 +161,13 @@ class Deploy(BaseTask):
 
         with cd('%(virtual_env)s/project' % env):
             run('git pull')
-            with prefix('workon %(domain)s' % env):
-                if update_requirements:
-                    run('pip install -r REQUIREMENTS')
-                if migrate:
-                    run('django-admin.py migrate --all')
-                if static:
-                    run('django-admin.py collectstatic --noinput')
+
+        self.remove_old_releases()
+        self.update_and_migrate()
         sudo('service apache2 graceful')
 
 
-class Rollback(BaseTask):
+class Rollback(BaseDeploy):
     """
     Rollback remote project to previous release if one exists
     """
@@ -176,16 +188,9 @@ class Rollback(BaseTask):
             run('rm -Rf current')
             run('mv %s current' % previous_release)
 
-            # Tidy up (remove) old releases
-            while int(run('ls -1 | wc -l')) >  RELEASE_COUNT:
-                run('rm -Rf $(ls . | sort -f | head -n 1)')
-            if update_requirements:
-                run('pip install -r REQUIREMENTS')
-            if migrate:
-                run('django-admin.py migrate --all')
-            if static:
-                run('django-admin.py collectstatic')
-            sudo('service apache2 graceful')
+        self.remove_old_releases()
+        self.update_and_migrate()
+        sudo('service apache2 graceful')
 
 
 class Test(tasks.Task):
