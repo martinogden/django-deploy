@@ -4,6 +4,7 @@ from fabric.api import local, run, sudo, prefix, cd, env
 from fabric.contrib import django
 from fabric.contrib.files import upload_template, append, comment, uncomment
 from fabric.contrib.console import confirm
+from fabric.operations import get
 from fabric import tasks
 from fabric.utils import abort, puts
 
@@ -216,34 +217,54 @@ class CreateDatabase(BaseTask):
             run('django-admin.py syncdb --noinput %s' % migs)
 
 
-class SyncDatabase(BaseTask):
+class SyncLocalDatabase(BaseTask):
     """
-    Sync local MYSQL database with remote database
+    Download database from remote server to local env
     """
-    name = 'sync_database'
+    name = 'sync_local_database'
 
     def run(self):
-        self.remote_db_settings = settings.DATABASES['default']
-        if not self.remote_db_settings['ENGINE'].endswith('mysql'):
-            abort('Command only possible with MySQL databases')
-        self.export_db()
-        self.import_db()
+        super(SyncLocalDatabase, self).run()
+        dump = '/tmp/%(domain)s.json' % env
+        # Remote
+        with cd('%(virtual_env)s/project' % env):
+            with prefix('workon %(domain)s' % env):
+                run('django-admin.py dumpdata > %s --exclude=contenttypes' %\
+                    dump)
 
-    def export_db(self):
-        # Export remote database
-        run('mysqldump -u%(USER)s -p%(PASSWORD)s --databases %(NAME)s '\
-            '> /tmp/%(NAME)s.sql' % self.remote_db_settings)
-        local('scp %s@%s:/tmp/%s.sql /tmp/' % (
-              env.user, env.hosts[0],
-              self.remote_db_settings['NAME']))
+        # Local
+        with prefix('source ../bin/activate'):
+            with cd('$VIRTUAL_ENV/project'):
+                get(dump, '/tmp/')
+                local('django-admin.py syncdb --noinput --migrate')
+                local('django-admin.py flush --noinput')
+                local('django-admin.py loaddata %s' % dump)
 
-    def import_db(self):
-        # Import remote database to local
-        local_settings = self.get_local_settings()
-        local('mysql -p -h localhost %s < /tmp/%(NAME)s.sql' % (
-              local_settings.DATABASES['default']['NAME'],\
-              self.remote_db_settings['NAME']))
 
+class SyncLocalMedia(BaseTask):
+    """
+    Download media from remote server to local env
+    """
+    name = 'sync_local_media'
+
+    def run(self):
+        super(SyncLocalMedia, self).run()
+        remote_dir = '/var/www/vhosts/%(domain)s/media' % env
+        tar = '/tmp/%(domain)s.tar' % env
+
+        # Remote
+        with cd(remote_dir):
+            run('tar -czf %s .' % tar)
+        
+        # Local
+        get(tar, '/tmp')
+        with prefix('source ../bin/activate'):
+            local_settings = self.get_local_settings()
+            local('mkdir -p %s' % local_settings.MEDIA_ROOT)
+            local('chmod 777 %s' % local_settings.MEDIA_ROOT)
+            with cd(local_settings.MEDIA_ROOT):
+                local('tar -C %s -xvf %s' %\
+                      (local_settings.MEDIA_ROOT, tar))
 
 class VirtualenvPermission(tasks.Task):
 
@@ -261,4 +282,5 @@ deploy = Deploy()
 rollback = Rollback()
 test  = Test()
 create_database = CreateDatabase()
-sync_database = SyncDatabase()
+sync_local_database = SyncLocalDatabase()
+sync_local_media = SyncLocalMedia()
