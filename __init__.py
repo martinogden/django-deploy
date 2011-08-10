@@ -99,14 +99,9 @@ class Bootstrap(BaseTask):
             % env)
 
     def create_folders(self):
-        # Create dirs
-        vhost_root = '/var/www/vhosts/%(domain)s' % env
-        for folder in ['media', 'static', 'apache', 'log']:
-            run('mkdir -p %(vhost_root)s/%(folder)s' % locals())
-
-        # Permissions
-        for folder in ['media', 'log']:
-            run('chmod 777 %(vhost_root)s/%(folder)s' % locals())
+        with cd('/var/www/vhosts/%(domain)s/' % env):
+            run('mkdir -p {media,static,apache,log}')
+            run('chmod 777 {media,log}')
 
     def upload_config_files(self):
         vhost_root = '/var/www/vhosts/%(domain)s' % env
