@@ -284,12 +284,13 @@ class RemoteDjangoAdmin(BaseTask):
     "Run django-admin.py commands remotely"
     name = 'django_admin'
 
-    def run(self, cmd):
+    def run(self, cmd=None):
         super(RemoteDjangoAdmin, self).run()
         if cmd:
             with prefix('workon %(domain)s' % env):
-                # with cd('$VIRTUAL_ENV/project'):
-                    run('django-admin.py %s' % cmd)
+                run('django-admin.py %s' % cmd)
+        else:
+            abort('You must specify a command (e.g. sycdb --migrate)')
 
 
 virtualenv_permission = VirtualenvPermission()
