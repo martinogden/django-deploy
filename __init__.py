@@ -100,7 +100,9 @@ class Bootstrap(BaseTask):
             % env)
 
     def create_folders(self):
-        with cd('/var/www/vhosts/%(domain)s/' % env):
+        vhost = '/var/www/vhosts/%(domain)s/' % env
+        run('mkdir %s' % vhost)
+        with cd(vhost):
             run('mkdir -p {media,static,apache,log}')
             run('chmod 777 {media,log}')
 
