@@ -198,9 +198,10 @@ class Test(tasks.Task):
     name = 'test'
 
     def run(self):
-        with cd(env.path):
-            local('django-admin.py validate')
-            local('django-admin.py test')
+        with prefix('source ../bin/activate'):
+            with cd('$VIRTUAL_ENV/project'):
+                local('django-admin.py validate')
+                local('django-admin.py test')
 
 
 class CreateDatabase(BaseTask):
@@ -210,7 +211,10 @@ class CreateDatabase(BaseTask):
     name = 'create_database'
 
     def run(self, run_migrations=False):
-        remote_db_settings = settings.DATABASES['default']
+        remote_db_settings = {
+            'USER': 'root',
+            'PASSWORD': env.password,
+            'NAME': env.domain.replace('.', '_')}
 
         sudo('mysql -u%(USER)s -p%(PASSWORD)s -e '\
              '"CREATE DATABASE %(NAME)s"' % remote_db_settings)
@@ -276,6 +280,18 @@ class VirtualenvPermission(tasks.Task):
         sudo('chmod 777 $WORKON_HOME/hook.log')
 
 
+class RemoteDjangoAdmin(BaseTask):
+    "Run django-admin.py commands remotely"
+    name = 'django_admin'
+
+    def run(self, cmd):
+        super(RemoteDjangoAdmin, self).run()
+        if cmd:
+            with prefix('workon %(domain)s' % env):
+                # with cd('$VIRTUAL_ENV/project'):
+                    run('django-admin.py %s' % cmd)
+
+
 virtualenv_permission = VirtualenvPermission()
 production = Production()
 staging  = Staging()
@@ -286,3 +302,4 @@ test  = Test()
 create_database = CreateDatabase()
 sync_local_database = SyncLocalDatabase()
 sync_local_media = SyncLocalMedia()
+django_admin = RemoteDjangoAdmin()
