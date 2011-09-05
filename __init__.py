@@ -42,7 +42,6 @@ class BaseTask(tasks.Task):
 
     def select_env(self, name='staging'):
         env.name = name
-        env.repo = env.domain.replace('.', '_')
         env.virtual_env = '$WORKON_HOME/%(domain)s' % env
         django.settings_module('settings.%(name)s' % env)
 
@@ -54,6 +53,7 @@ class Production(BaseTask):
     name = 'production'
 
     def run(self):
+        env.repo = env.domain.replace('.', '_')
         return self.select_env('production')
 
 
@@ -64,6 +64,7 @@ class Staging(BaseTask):
     name = 'staging'
 
     def run(self):
+        env.repo = env.domain.replace('.', '_')
         env.domain = 'staging.%(domain)s' % env
         return self.select_env('staging')
 
