@@ -11,22 +11,22 @@ from fabric.utils import abort, puts
 from django.conf import settings
 
 django.settings_module('settings.development')
-if not hasattr(settings, 'FABRIC_DOMAIN'):
-    abort('You must set FABRIC_DOMAIN in your settings file')
+for attr in ['DOMAIN', 'USER', 'HOST', 'PASSWORD', 'REPO']:
+    if not hasattr(settings, 'FABRIC_%s' % attr):
+        abort('You must set FABRIC_%s in your settings file' % attr)
 
 env.domain = settings.FABRIC_DOMAIN
+env.user = settings.FABRIC_USER
+env.hosts = [settings.FABRIC_HOST]
+env.password = settings.FABRIC_PASSWORD
+env.repo = settings.FABRIC_REPO
+
 env.path = local('pwd')
-env.user = 'cahoona'
-env.hosts = ['92.63.136.213']
-env.password = 'v-Fj9P@8'
 # Allow fabric to restart apache2
 env.always_use_pty = False
 
 # Number of previous deploy releases to keep
-RELEASE_COUNT = 5
-
-# @link https://bitbucket.org/dhellmann/virtualenvwrapper/issue/62/hooklog-permissions#comment-229798
-# env.shell = '/bin/bash --noprofile -l -c'
+RELEASE_COUNT = getattr(settings, 'FABRIC_RELEASES', 5)
 
 
 class BaseTask(tasks.Task):
@@ -95,7 +95,7 @@ class Bootstrap(BaseTask):
         # Checkout git repo from cahoona VM-3
         run('mkdir -p %(virtual_env)s/releases' % env)
         with cd('%(virtual_env)s/releases' % env):
-            run('git clone git@92.63.136.209:%(repo)s.git current' % env)
+            run('git clone %(repo)s current' % env)
         # symlink project to current release
         run('ln -s %(virtual_env)s/releases/current %(virtual_env)s/project'\
             % env)
