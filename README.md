@@ -1,7 +1,7 @@
 django-deploy
 =============
 
-Inspired by [capistrano](https://github.com/capistrano/capistrano/), django-deploy is a [fabfile](http://docs.fabfile.org/en/1.3.1/index.html) to aid quick and easy setup and deployment of django-powered websites. Configured for use with ubuntu, apache virtual hosts, nginx, mod_wsgi and mysql / mysqlite3.
+Inspired by [capistrano](https://github.com/capistrano/capistrano/), django-deploy is a [fabfile](http://docs.fabfile.org/en/1.3.1/index.html) to aid quick and easy setup and deployment of django-powered websites. Configured for use with git, ubuntu, apache virtual hosts, nginx, mod_wsgi and mysql / mysqlite3.
 
 
 Installation
