@@ -1,7 +1,8 @@
 django-deploy
 =============
 
-Inspired by [capistrano](https://github.com/capistrano/capistrano/), django-deploy is a [fabfile](http://docs.fabfile.org/en/1.3.1/index.html) to aid quick and easy setup and deployment of django-powered websites. Configured for use with apache virtual hosts, nginx, mod_wsgi and mysql / mysqlite3.
+Inspired by [capistrano](https://github.com/capistrano/capistrano/), django-deploy is a [fabfile](http://docs.fabfile.org/en/1.3.1/index.html) to aid quick and easy setup and deployment of django-powered websites. Configured for use with ubuntu, apache virtual hosts, nginx, mod_wsgi and mysql / mysqlite3.
+
 
 Installation
 ------------
@@ -29,6 +30,7 @@ Usage
 
 From the root of your django project you can run the fab commands. The commands are in the format `fab <ENVIRONMENT> <COMMAND>` e.g. `fab staging deploy`.
 
+
 Commands
 =======
 
@@ -40,6 +42,7 @@ Example: `fab production boostrap`.
  * create a new virtualenv
  * checkout the git repository
  * create static / media folders
+ * Create database and initial schema (not including migrations)
 
 
 - - -
@@ -108,6 +111,7 @@ Requirements
 
  * django
  * fabric
+ * south (for database migrations)
 
 
 Authors
