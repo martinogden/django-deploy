@@ -120,8 +120,3 @@ Authors
  * [Martin Ogden](http://twitter.com/martinogden)
  * [Sam Starling](http://twitter.com/samstarling)
 
-
-License
-------
-
-Licensed for use under [GNU GPL](http://www.gnu.org/licenses/gpl.html).
