@@ -124,4 +124,4 @@ Authors
 License
 ------
 
-Licensed for use under [GNU GLP](http://www.gnu.org/licenses/gpl.html).
+Licensed for use under [GNU GPL](http://www.gnu.org/licenses/gpl.html).
