@@ -124,4 +124,4 @@ Authors
 License
 ------
 
-Licensed for use under [Attribution 3.0 unported](http://creativecommons.org/licenses/by/3.0/).
+Licensed for use under [GNU GLP](http://www.gnu.org/licenses/gpl.html).
