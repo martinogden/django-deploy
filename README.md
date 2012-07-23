@@ -117,8 +117,8 @@ Requirements
 Authors
 -------
 
- * [Martin Ogden](@martinogden)
- * [Sam Starling](@samstarling)
+ * [Martin Ogden](http://twitter.com/martinogden)
+ * [Sam Starling](http://twitter.com/samstarling)
 
 
 License
