@@ -9,7 +9,7 @@ Installation
 
 Download the fabfile into the root of a django project (alongside `manage.py` etc.):
 
-    git clone git://github.com/martinogden/django-deploy.git
+    git clone git://github.com/martinogden/django-deploy.git fabfile
 
 
 Add the following settings to your `settings.py` file
